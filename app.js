@@ -23,7 +23,8 @@ const budgetController = (function() {
 			inc: 0
 		},
 		budget: 0,
-		percentage: -1
+		percentage: -1,
+		count: 0
 	};
 
 	return {
@@ -31,13 +32,8 @@ const budgetController = (function() {
 			var newItem, ID;
 
 			//Create New ID
-			if (data.allItems[type].length > 0) {
-
-				ID = data.allItems[type][data.allItems[type].length - 1].id + 1;
-
-			} else {
-				ID = 0;
-			}
+			ID = data.count;
+			data.count += 1;
 
 			//Create New Item based on inc and exp type
 			if (type === 'exp') {
@@ -48,10 +44,28 @@ const budgetController = (function() {
 
 			//Push into data structure
 			data.allItems[type].push(newItem);
+
+			//Update Total
 			data.totals[type] += newItem.value;
 
 			//Return new element
 			return newItem;
+		},
+
+		deleteItem: function(type, id) {
+
+			var ids, index;
+			ids = data.allItems[type].map(function(current) {
+				return current.id
+			});
+			index = ids.indexOf(id);
+			if (index !== -1) {
+				//Update Total
+				data.totals[type] -= data.allItems[type][index].value;
+				//Delete from Data Structure
+				data.allItems[type].splice(index, 1);
+			}
+
 		},
 
 		calculateBudget: function(){
@@ -130,6 +144,15 @@ const UIController = (function() {
 			document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
 
 		},
+
+		deleteListItem: function(selectorID) {
+			
+			var element;
+			element = document.getElementById(selectorID);
+			element.parentNode.removeChild(element);
+
+		},
+
 		clearFields: function() {
 			var fields, fieldsArr;
 
@@ -204,10 +227,24 @@ const controller = (function(budgetCtrl, UICtrl){
 	};
 
 	var ctrlDeleteItem = function(event) {
-		var itemID;
+		var itemID, splitID, type, ID;
+		//This works only if there is no great grand child node that has an ID, 
+		//I don't believe this is efficient. 
 		itemID = event.target.parentNode.parentNode.parentNode.parentNode.id;
 		if (itemID) {
+			
+			splitID = itemID.split('-');
+			type = splitID[0];
+			ID = parseInt(splitID[1]);
 
+			//1. Delete Item from data structure
+			budgetCtrl.deleteItem(type, ID);
+
+			//2. Delete Item from UI
+			UICtrl.deleteListItem(itemID);
+
+			//3. Update Item on UI
+			updateBudget();
 		}
 	};
 
@@ -226,7 +263,7 @@ const controller = (function(budgetCtrl, UICtrl){
 
 	return {
 		init: function() {
-			console.log('Application has sttarted');
+			console.log('Application has started');
 			UICtrl.displayBudget({
 				budget: 0,
 				totalInc: 0,
