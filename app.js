@@ -174,6 +174,12 @@ const UIController = (function() {
 
 	}; 
 
+	var nodeListForEach = function(list, callback) {
+		for(var i = 0; i < list.length; i++) {
+			callback(list[i], i);
+		}
+	};
+
 	return {
 		getInput: function() {
 			return {
@@ -245,12 +251,6 @@ const UIController = (function() {
 
 			fields = document.querySelectorAll(DOMstrings.expensesLittlePercentageLabel);
 
-			var nodeListForEach = function(list, callback) {
-				for(var i = 0; i < list.length; i++) {
-					callback(list[i], i);
-				}
-			};
-
 			nodeListForEach(fields, function(cur, index){
 				if (littlePercentages[index] > 0){
 					cur.textContent = littlePercentages[index] + '%';
@@ -258,6 +258,22 @@ const UIController = (function() {
 					cur.textContent = '--';
 				}
 			});
+		},
+
+		changedType: function() {
+			var fields;
+
+			fields = document.querySelectorAll(
+				DOMstrings.inputType + ', ' +
+				DOMstrings.inputDescription + ', ' +
+				DOMstrings.inputValue
+			);
+
+			nodeListForEach(fields, function(cur) {
+				cur.classList.toggle('red-focus');
+			});
+
+			document.querySelector(DOMstrings.inputBtn).classList.toggle('red')
 		},
 
 		displayMonth: function() {
@@ -294,6 +310,8 @@ const controller = (function(budgetCtrl, UICtrl){
 		});
 
 		document.querySelector(DOM.container).addEventListener('click', ctrlDeleteItem);
+
+		document.querySelector(DOM.inputType).addEventListener('change', UICtrl.changedType);
 	};
 
 	var ctrlAddItem = function(){
